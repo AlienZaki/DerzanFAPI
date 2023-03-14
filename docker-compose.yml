@@ -1,0 +1,60 @@
+version: '3.9'
+
+services:
+  app:
+    image: derzan_fapi
+    container_name: app
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    environment:
+      - MONGO_URI=mongodb://alien:07775000@mongodb:27017/
+      - CELERY_BROKER=redis://redis:6379/0
+      - CELERY_BACKEND=redis://redis:6379/1
+      - REDIS_URI=redis://redis:6379/0
+    ports:
+      - 8000:8000
+
+  celery:
+    container_name: celery
+    build: .
+    command: celery -A tasks worker -l info
+    restart: always
+    environment:
+      - MONGO_URI=mongodb://alien:07775000@mongodb:27017/
+      - CELERY_BROKER=redis://redis:6379/0
+      - CELERY_BACKEND=redis://redis:6379/1
+      - REDIS_URI=redis://redis:6379/0
+    depends_on:
+      - redis
+      - mongodb
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=alien
+      - MONGO_INITDB_ROOT_PASSWORD=07775000
+    volumes:
+      - mongo-data:/data/db
+    ports:
+      - '27017:27017'
+
+  flower:
+    image: mher/flower
+    restart: always
+    environment:
+      - CELERY_BROKER=redis://redis:6379/0
+      - CELERY_BACKEND=redis://redis:6379/1
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+      - celery
+
+  redis:
+    image: redis:alpine
+    restart: always
+
+volumes:
+  mongo-data:
