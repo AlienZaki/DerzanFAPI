@@ -26,5 +26,6 @@
 **/Scripts
 **/.env
 **/pyvenv.cfg
+/venv/
 LICENSE
 README.md
