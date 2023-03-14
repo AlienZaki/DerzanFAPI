@@ -3,3 +3,4 @@
 **/Scripts
 **/.vscode
 **/pyvenv.cfg
+/docker-compose.debug.yml

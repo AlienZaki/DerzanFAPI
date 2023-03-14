@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 from celery import Celery
-from db import db
+from .db import db
 import time
 import os
 

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from dotenv import load_dotenv
-from tasks import add
-from db import db
+from core.tasks import add
+from core.db import db
 import os
 
 
