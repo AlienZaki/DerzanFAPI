@@ -21,7 +21,8 @@
 **/npm-debug.log
 **/obj
 **/secrets.dev.yaml
-**/values.dev.yamlLib
+**/values.dev.yaml
+**/Lib
 **/Scripts
 **/.env
 **/pyvenv.cfg
