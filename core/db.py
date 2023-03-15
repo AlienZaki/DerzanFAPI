@@ -112,29 +112,6 @@ def migrate_product_collection():
     products_collection.create_index([('vendor_id', ASCENDING), ('code', ASCENDING)], unique=True)
 
 
-def migrate_image_collection():
-    print('=> Migrating images..')
-    try:
-        images_collection = db.create_collection('images')
-    except:
-        images_collection = db.images
-    image_validator = {
-        '$jsonSchema': {
-            'bsonType': 'object',
-            'required': ['url', 'product_id'],
-            'properties': {
-                'url': {
-                    'bsonType': 'string',
-                },
-                'product_id': {
-                    'bsonType': 'objectId',
-                }
-            }
-        }
-    }
-    # apply schema
-    db.command('collMod', 'images', validator=image_validator)
-
 
 def migrate_product_urls_collection():
     print('=> Migrating product_urls..')
@@ -172,9 +149,6 @@ def migrate_all_collections():
 
     # migrate product collection
     migrate_product_collection()
-
-    # migrate image collection
-    # migrate_image_collection()
 
     # migrate product URLs collection
     migrate_product_urls_collection()

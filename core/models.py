@@ -77,10 +77,59 @@ class Vendor:
     def get_product_urls_count(self):
         return product_urls_collection.count_documents({'vendor_id': self.id})
 
-    def get_products(self):
-        query = {'vendor_id': self.id}
-        product_dicts = products_collection.find(query).batch_size(1000)
-        return product_dicts
+    def get_products(self, offset=0, limit=1000):
+        products = products_collection.aggregate([
+            {
+                '$match': {
+                    'vendor_id': self.id
+                }
+            },
+            {
+                '$lookup': {
+                    'from': 'vendors',
+                    'localField': 'vendor_id',
+                    'foreignField': '_id',
+                    'as': 'vendor'
+                }
+            },
+            {
+                '$unwind': {
+                    'path': '$vendor',
+                    'preserveNullAndEmptyArrays': True
+                }
+            },
+            {
+                '$project': {
+                    '_id': 0,
+                    'vendor_id': 0,
+                }
+            },
+            {
+                '$addFields': {
+                    'features_html': {
+                        '$reduce': {
+                            'input': '$variant_features',
+                            'initialValue': '',
+                            'in': {
+                                '$concat': [
+                                    '$$value',
+                                    '<',
+                                    {'$replaceAll': {'input': '$$this.key', 'find': ' ', 'replacement': '_'}},
+                                    '>',
+                                    '$$this.value',
+                                    '</',
+                                    {'$replaceAll': {'input': '$$this.key', 'find': ' ', 'replacement': '_'}},
+                                    '>',
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            {'$skip': offset},
+            {'$limit': limit}
+        ])
+        return products
 
     def get_products_count(self):
         return products_collection.count_documents({'vendor_id': self.id})
@@ -198,17 +247,46 @@ if __name__ == '__main__':
 
     print(vendor.id)
     #
-    products = vendor.get_product_urls()
+    # products = vendor.get_product_urls()
     # # print(products.batch_size())
     # for p in products:
     #     print(p)
 
-    urls = [i['url'] for i in products]
-    vendor.bulk_update_product_urls_status(urls, 0)
-    vendor.delete_all_vendor_products()
+    # urls = [i['url'] for i in products]
+    # vendor.bulk_update_product_urls_status(urls, 0)
+    # vendor.delete_all_vendor_products()
 
-    #
-    # products = [{'code': 'SV4-284', 'name': 'Fineroom Living Porto Keten Kare Kırlent 50X50 Lacivert', 'url': 'https://app.vivense.com/products/vsin/SV4-284', 'variant_group': '608f12ef64ce585a6479f513', 'main_category': 'Ev ve Bahçe / Mobilya', 'vendor_id': ObjectId('641190097cdd1365fa324f0d'), 'category': 'Ev Tekstili///Kırlent + Minder', 'price': 234.0, 'list_price': 234.0, 'currency': 'TL', 'images': ['https://img.vivense.com/images/a11ed60e8d27492597914ef3d07ca5aa.jpg', 'https://img.vivense.com/images/ae89286c45194bd48843b269fabff0a0.jpg'], 'description': '<div class="panel-body" style="display: block;">\n                                        <table class="table">\n                                            <tbody id="producttables" class="desctab">\n                                                <tr><th>Malzeme</th><td>Keten</td></tr>\n<tr><th>Ürün Tipleri</th><td>Kırlent</td></tr>\n<tr><th>Ürün Özelliği</th><td>İç Dolgusuz</td></tr>\n<tr><th>Renk</th><td>Mavi</td></tr>\n<tr><th>Marka</th><td>FİNEROOM LİVİNG</td></tr>\n<tr><th>Ek Bilgiler</th><td>İç yastık ile gönderilmektedir</td></tr>\n<tr><th>Kumaş Bakım/Temizlik Önerisi</th><td>30 derecede hassas yıkama yapmanız tavsiye edilir.</td></tr>\n<tr><th>Ölçü</th><td>-</td></tr>\n<tr><th>Ürün Kodu</th><td>SV4-284</td></tr>\n                                            </tbody>\n                                        </table>\n                                    </div><br>\n                <div class="panel panel-default custom-panel" id="part87">\n                    <div class="panel-heading pd-productsize open">Ürün Boyutları</div>\n                    <div class="panel-body nopadding" style="display: block;">\n                        <table class="table product-feature">\n                            <thead><tr><th class="main-header">&nbsp;</th><th>Genişlik</th><th>Derinlik</th><th>Yükseklik</th></tr></thead>\n                            <tbody>\n                                <tr><th>FİNEROOM LİVİNG PORTO KETEN KARE KIRLENT 50X50 LACİVERT</th><td>50.0 cm</td><td>50.0 cm</td><td>3.0 cm</td></tr>\n                            </tbody>\n                        </table>\n                    </div>\n                </div>\n                '}, {'code': 'SV4-285', 'name': 'Fineroom Living Porto Keten Kare Kırlent 50X50 Su Yeşili', 'url': 'https://app.vivense.com/products/vsin/SV4-285', 'variant_group': '608f12ef64ce585a6479f513', 'main_category': 'Ev ve Bahçe / Mobilya', 'vendor_id': ObjectId('641190097cdd1365fa324f0d'), 'category': 'Ev Tekstili///Kırlent + Minder', 'price': 234.0, 'list_price': 234.0, 'currency': 'TL', 'images': ['https://img.vivense.com/images/43ec4753c9d046bcadf02a1283475cff.jpg', 'https://img.vivense.com/images/494468e8e78a4284b7d572d55a32a93f.jpg'], 'description': '<div class="panel-body" style="display: block;">\n                                        <table class="table">\n                                            <tbody id="producttables" class="desctab">\n                                                <tr><th>Malzeme</th><td>Keten</td></tr>\n<tr><th>Ürün Tipleri</th><td>Kırlent</td></tr>\n<tr><th>Ürün Özelliği</th><td>İç Dolgusuz</td></tr>\n<tr><th>Renk</th><td>Mavi</td></tr>\n<tr><th>Marka</th><td>FİNEROOM LİVİNG</td></tr>\n<tr><th>Ek Bilgiler</th><td>İç yastık ile gönderilmektedir</td></tr>\n<tr><th>Kumaş Bakım/Temizlik Önerisi</th><td>30 derecede hassas yıkama yapmanız tavsiye edilir.</td></tr>\n<tr><th>Ölçü</th><td>-</td></tr>\n<tr><th>Ürün Kodu</th><td>SV4-285</td></tr>\n                                            </tbody>\n                                        </table>\n                                    </div><br>\n                <div class="panel panel-default custom-panel" id="part87">\n                    <div class="panel-heading pd-productsize open">Ürün Boyutları</div>\n                    <div class="panel-body nopadding" style="display: block;">\n                        <table class="table product-feature">\n                            <thead><tr><th class="main-header">&nbsp;</th><th>Genişlik</th><th>Derinlik</th><th>Yükseklik</th></tr></thead>\n                            <tbody>\n                                <tr><th>FİNEROOM LİVİNG PORTO KETEN KARE KIRLENT 50X50 SU YEŞİLİ</th><td>50.0 cm</td><td>50.0 cm</td><td>3.0 cm</td></tr>\n                            </tbody>\n                        </table>\n                    </div>\n                </div>\n                '}, {'code': 'SV4-286', 'name': 'Fineroom Living Porto Keten Kare Kırlent 50X50 Mor', 'url': 'https://app.vivense.com/products/vsin/SV4-286', 'variant_group': '608f12ef64ce585a6479f513', 'main_category': 'Ev ve Bahçe / Mobilya', 'vendor_id': ObjectId('641190097cdd1365fa324f0d'), 'category': 'Ev Tekstili///Kırlent + Minder', 'price': 234.0, 'list_price': 234.0, 'currency': 'TL', 'images': ['https://img.vivense.com/images/9231ab9c44174b0693f4256e4617a053.jpg', 'https://img.vivense.com/images/d6197baf3a304b099ae35d08bf267c4b.jpg'], 'description': '<div class="panel-body" style="display: block;">\n                                        <table class="table">\n                                            <tbody id="producttables" class="desctab">\n                                                <tr><th>Malzeme</th><td>Keten</td></tr>\n<tr><th>Ürün Tipleri</th><td>Kırlent</td></tr>\n<tr><th>Ürün Özelliği</th><td>İç Dolgusuz</td></tr>\n<tr><th>Renk</th><td>Mavi</td></tr>\n<tr><th>Marka</th><td>FİNEROOM LİVİNG</td></tr>\n<tr><th>Ek Bilgiler</th><td>İç yastık ile gönderilmektedir</td></tr>\n<tr><th>Kumaş Bakım/Temizlik Önerisi</th><td>30 derecede hassas yıkama yapmanız tavsiye edilir.</td></tr>\n<tr><th>Ölçü</th><td>-</td></tr>\n<tr><th>Ürün Kodu</th><td>SV4-286</td></tr>\n                                            </tbody>\n                                        </table>\n                                    </div><br>\n                <div class="panel panel-default custom-panel" id="part87">\n                    <div class="panel-heading pd-productsize open">Ürün Boyutları</div>\n                    <div class="panel-body nopadding" style="display: block;">\n                        <table class="table product-feature">\n                            <thead><tr><th class="main-header">&nbsp;</th><th>Genişlik</th><th>Derinlik</th><th>Yükseklik</th></tr></thead>\n                            <tbody>\n                                <tr><th>FİNEROOM LİVİNG PORTO KETEN KARE KIRLENT 50X50 MOR</th><td>50.0 cm</td><td>50.0 cm</td><td>3.0 cm</td></tr>\n                            </tbody>\n                        </table>\n                    </div>\n                </div>\n                '}, {'code': 'SV4-287', 'name': 'Fineroom Living Porto Keten Kare Kırlent 50X50 Pembe', 'url': 'https://app.vivense.com/products/vsin/SV4-287', 'variant_group': '608f12ef64ce585a6479f513', 'main_category': 'Ev ve Bahçe / Mobilya', 'vendor_id': ObjectId('641190097cdd1365fa324f0d'), 'category': 'Ev Tekstili///Kırlent + Minder', 'price': 234.0, 'list_price': 234.0, 'currency': 'TL', 'images': ['https://img.vivense.com/images/c94b7f50c3544a589a2219de6c75517f.jpg', 'https://img.vivense.com/images/ee34846a615f4d8fb4a6c445a2d1c430.jpg'], 'description': '<div class="panel-body" style="display: block;">\n                                        <table class="table">\n                                            <tbody id="producttables" class="desctab">\n                                                <tr><th>Malzeme</th><td>Keten</td></tr>\n<tr><th>Ürün Tipleri</th><td>Kırlent</td></tr>\n<tr><th>Ürün Özelliği</th><td>İç Dolgusuz</td></tr>\n<tr><th>Renk</th><td>Mavi</td></tr>\n<tr><th>Marka</th><td>FİNEROOM LİVİNG</td></tr>\n<tr><th>Ek Bilgiler</th><td>İç yastık ile gönderilmektedir</td></tr>\n<tr><th>Kumaş Bakım/Temizlik Önerisi</th><td>30 derecede hassas yıkama yapmanız tavsiye edilir.</td></tr>\n<tr><th>Ölçü</th><td>-</td></tr>\n<tr><th>Ürün Kodu</th><td>SV4-287</td></tr>\n                                            </tbody>\n                                        </table>\n                                    </div><br>\n                <div class="panel panel-default custom-panel" id="part87">\n                    <div class="panel-heading pd-productsize open">Ürün Boyutları</div>\n                    <div class="panel-body nopadding" style="display: block;">\n                        <table class="table product-feature">\n                            <thead><tr><th class="main-header">&nbsp;</th><th>Genişlik</th><th>Derinlik</th><th>Yükseklik</th></tr></thead>\n                            <tbody>\n                                <tr><th>FİNEROOM LİVİNG PORTO KETEN KARE KIRLENT 50X50 PEMBE</th><td>50.0 cm</td><td>50.0 cm</td><td>3.0 cm</td></tr>\n                            </tbody>\n                        </table>\n                    </div>\n                </div>\n                '}]
-    # # vendor.bulk_create_products(products)
-    # print(products[0])
-    # products_collection.insert_one(products[0])
+    products = db.products.aggregate([
+        {
+            '$addFields': {
+                'features_html': {
+                    '$reduce': {
+                        'input': '$variant_features',
+                        'initialValue': '',
+                        'in': {
+                            '$concat': [
+                                '$$value',
+                                '<',
+                                {'$replaceAll': {'input': '$$this.key', 'find': ' ', 'replacement': '_'}},
+                                '>',
+                                '$$this.value',
+                                '</',
+                                {'$replaceAll': {'input': '$$this.key', 'find': ' ', 'replacement': '_'}},
+                                '>',
+                            ]
+                        }
+                    }
+                }
+            }
+        },{
+            '$project':{
+                'features': 1
+            }
+        }
+
+    ])
+
+
+    from pprint import pprint
+    for p in products:
+        print(p)
