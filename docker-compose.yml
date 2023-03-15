@@ -13,7 +13,7 @@ services:
       - CELERY_BACKEND=redis://redis:6379/1
       - REDIS_URI=redis://redis:6379/0
     ports:
-      - 8000:8000
+      - 80:8000
 
   celery:
     container_name: celery
