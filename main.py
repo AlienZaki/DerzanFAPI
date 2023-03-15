@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import Response, StreamingResponse
 from dotenv import load_dotenv
 from core.tasks import vivense_scraper_task
-from core.db import db, products_collection
+from core.db import db, products_collection, migrate_all_collections
 from core.scraper.vivense import VivenseScraper
 from jinja2 import Template
 import os, io
@@ -11,6 +11,9 @@ import os, io
 # load environment variables
 load_dotenv()
 config = os.environ
+
+# Migrate db collections
+migrate_all_collections()
 
 app = FastAPI()
 
