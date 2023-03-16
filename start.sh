@@ -4,4 +4,4 @@
 
 
 # Start the server using Gunicorn
-exec gunicorn --bind 0.0.0.0:8000 --timeout 600 uvicorn.workers.UvicornWorker main:app
+exec gunicorn --bind 0.0.0.0:8000 --timeout 600 main:app
