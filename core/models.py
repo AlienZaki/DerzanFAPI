@@ -119,7 +119,7 @@ class Vendor:
                                     '<',
                                     {'$replaceAll': {'input': '$$this.key', 'find': ' ', 'replacement': '_'}},
                                     '>',
-                                    '$$this.value',
+                                    {'$toString': '$$this.value'},
                                     '</',
                                     {'$replaceAll': {'input': '$$this.key', 'find': ' ', 'replacement': '_'}},
                                     '>',
