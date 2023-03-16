@@ -81,6 +81,9 @@ class Vendor:
         return product_urls_collection.count_documents(query)
 
     def get_products(self, offset=0, limit=1000):
+        if limit == -1:
+            limit = self.get_products_count()
+
         products = products_collection.aggregate([
             {
                 '$match': {
@@ -183,62 +186,6 @@ class Vendor:
 
     def __str__(self):
         return self.name
-
-
-class ProductImage:
-    def __init__(self, url, product_id):
-        self.url = url
-        self.product_id = product_id
-
-    def save(self):
-        # save the image to the database
-        db.images.insert_one({
-            'url': self.url,
-            'product_id': self.product_id
-        })
-
-    @staticmethod
-    def find_by_product(product_id):
-        # find all images for a given product
-        return db.images.find({'product_id': product_id})
-
-
-class ProductURL:
-    def __init__(self, vendor_id, url, status=0):
-        self.vendor_id = vendor_id
-        self.url = url
-        self.status = status
-
-    def save(self):
-        # save the product URL to the database
-        product_urls_collection.insert_one({
-            'vendor_id': self.vendor_id,
-            'url': self.url,
-            'status': self.status
-        })
-
-    @staticmethod
-    def find_by_vendor(vendor_id):
-        # find all product URLs for a given vendor
-        return product_urls_collection.find({'vendor_id': vendor_id})
-
-    @staticmethod
-    def find_by_status(status):
-        # find all product URLs with a given status
-        return product_urls_collection.find({'status': status})
-
-    @staticmethod
-    def find_by_url(url):
-        # find a product URL by URL
-        return product_urls_collection.find_one({'url': url})
-
-    def to_dict(self):
-        produc_url_dict = {
-            'vendor_id': self.vendor_id,
-            'url': self.url,
-            'status': self.status,
-        }
-        return produc_url_dict
 
 
 if __name__ == '__main__':

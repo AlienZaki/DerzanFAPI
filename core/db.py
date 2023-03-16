@@ -112,7 +112,6 @@ def migrate_product_collection():
     products_collection.create_index([('vendor_id', ASCENDING), ('code', ASCENDING)], unique=True)
 
 
-
 def migrate_product_urls_collection():
     print('=> Migrating product_urls..')
     try:
@@ -157,4 +156,4 @@ def migrate_all_collections():
 
 
 if __name__ == '__main__':
-    db.list_collection_names()
+    print(len(products_collection.distinct('description')))
