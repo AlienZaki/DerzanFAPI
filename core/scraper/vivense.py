@@ -273,7 +273,7 @@ class VivenseScraper:
             self.flush_products_from_db()
 
         # get products from db
-        product_links = self.vendor.get_product_urls()
+        product_links = self.vendor.get_product_urls(status=0)
         total_products = self.vendor.get_product_urls_count()
         counter = 0
         print('=> Prodcuts:', total_products)
