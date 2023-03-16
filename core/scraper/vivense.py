@@ -1,10 +1,12 @@
-import logging, urllib3
+import logging
 import traceback
 from requests_html import HTMLSession
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from fake_useragent import UserAgent
 from core.models import Vendor
 from core.db import client
+from requests.exceptions import ProxyError
+from urllib3.exceptions import MaxRetryError
 
 ua = UserAgent()
 
@@ -188,7 +190,7 @@ class VivenseScraper:
             r = self.session.get(url)
             data = r.json()['items'][0]
             return self.parse_product_data(data)
-        except urllib3.exceptions.MaxRetryError as e:
+        except (MaxRetryError, ProxyError) as e:
             print('=> Warning:', e)
             return self.get_and_parse_product_details_by_vsin(vsin)
         except Exception:
@@ -210,7 +212,7 @@ class VivenseScraper:
             else:
                 print(r.text)
                 print('ERROR:', url)
-        except urllib3.exceptions.MaxRetryError as e:
+        except (MaxRetryError, ProxyError) as e:
             print('=> Warning:', e)
             return self.get_product_details(url)
         except Exception:
