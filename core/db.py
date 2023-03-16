@@ -8,7 +8,7 @@ import pprint
 
 load_dotenv()
 config = os.environ
-client = MongoClient(config['MONGO_URI'])
+client = MongoClient(config['MONGO_URI'] + '?keepAlive=true&socketTimeoutMS=360000&connectTimeoutMS=360000')
 db = client['derzandb']
 vendors_collection = db['vendors']
 products_collection = db['products']
@@ -157,4 +157,4 @@ def migrate_all_collections():
 
 
 if __name__ == '__main__':
-    migrate_all_collections()
+    db.list_collection_names()
