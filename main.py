@@ -30,7 +30,7 @@ async def scrape(request: Request, workers: int = 1, flush: bool = 0, proxy=0):
     return {'task_id': result.id}
 
 
-@app.get('/export')
+@app.get('/vivense/export')
 async def export(offset: int = 0, limit: int = 100, stock=1):
     # fetch the products using pagination
     products = VivenseScraper().vendor.get_products(offset, limit)
@@ -45,31 +45,6 @@ async def export(offset: int = 0, limit: int = 100, stock=1):
     response.headers["Content-Disposition"] = "attachment; filename=products.xml"
     response.headers["Content-Type"] = "application/octet-stream"
     return response
-
-@app.get('/export2')
-async def export2(offset: int = 0, limit: int = 100, stock=1):
-    # fetch the products using pagination
-    products = VivenseScraper().vendor.get_products(offset, limit)
-    # create a response object with a streaming content
-    response = StreamingResponse(generate_xml(products, stock), media_type='application/octet-stream')
-    response.headers["Content-Disposition"] = "attachment; filename=products.xml"
-    return response
-
-async def generate_xml(products, stock):
-    # create a template object
-    template = Template(open('products.xml').read())
-    # send the XML header
-    yield b'<?xml version="1.0" encoding="UTF-8"?>\n'
-    # loop through the products and render the XML
-    async for product in products:
-        rendered_xml = template.render(product=product, stock=stock)
-        # convert the rendered XML to bytes
-        xml_bytes = rendered_xml.encode('utf-8')
-        # send the bytes to the response stream
-        yield xml_bytes
-
-
-
 
 
 
