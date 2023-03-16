@@ -33,12 +33,13 @@ class VivenseScraper:
 
         # create vendor if not exist
         vendor_name = 'Vivense'
+        vendor_nickname = 'Mobilya'
         category = 'Ev ve Bahçe / Mobilya'
 
         # Get or create vendor
         self.vendor = Vendor.find_by_name(vendor_name)
         if not self.vendor:
-            self.vendor = Vendor(name=vendor_name, category=category)
+            self.vendor = Vendor(name=vendor_name, category=category, nickname=vendor_nickname)
             self.vendor.save()
 
     def search_nested_dict(self, nested_dict, search_key):

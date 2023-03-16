@@ -43,7 +43,7 @@ async def export(offset: int = 0, limit: int = 100, stock=1):
     # set the response headers to indicate a file download
     response = Response(content=file_like_object.getvalue())
     response.headers["Content-Disposition"] = "attachment; filename=products.xml"
-    response.headers["Content-Type"] = "application/octet-stream"
+    response.headers["Content-Type"] = "application/octet-stream; charset=utf-8"
     return response
 
 

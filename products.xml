@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="windows-1254"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Root>
     <Products>
         {% for product in products %}
