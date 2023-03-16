@@ -1,4 +1,4 @@
-import logging
+import logging, urllib3
 import traceback
 from requests_html import HTMLSession
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -183,9 +183,13 @@ class VivenseScraper:
     def get_and_parse_product_details_by_vsin(self, vsin):
         url = f'https://app.vivense.com/products/vsin/{vsin}'
         try:
+            self.update_session_proxy()
             r = self.session.get(url)
             data = r.json()['items'][0]
             return self.parse_product_data(data)
+        except urllib3.exceptions.MaxRetryError as e:
+            print('=> Warning:', e)
+            return self.get_and_parse_product_details_by_vsin(vsin)
         except Exception:
             traceback.print_exc()
             print('ERROR:', url)
@@ -205,6 +209,9 @@ class VivenseScraper:
             else:
                 print(r.text)
                 print('ERROR:', url)
+        except urllib3.exceptions.MaxRetryError as e:
+            print('=> Warning:', e)
+            return self.get_product_details(url)
         except Exception:
             traceback.print_exc()
             print('ERROR:', url)
@@ -274,7 +281,7 @@ class VivenseScraper:
 
         # get products from db
         product_links = self.vendor.get_product_urls(status=0)
-        total_products = self.vendor.get_product_urls_count()
+        total_products = self.vendor.get_product_urls_count(status=0)
         counter = 0
         print('=> Prodcuts:', total_products)
 
@@ -304,7 +311,7 @@ class VivenseScraper:
 
 
 if __name__ == '__main__':
-    bot = VivenseScraper(max_workers=1, proxy=True)
+    bot = VivenseScraper(max_workers=10, proxy=True)
     bot.run(force_refresh=False)
 
     # bot.vendor.products_urls.filter(status=1).update(status=0)

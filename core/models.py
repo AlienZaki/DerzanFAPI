@@ -74,8 +74,11 @@ class Vendor:
         #     yield doc
         return cursor
 
-    def get_product_urls_count(self):
-        return product_urls_collection.count_documents({'vendor_id': self.id})
+    def get_product_urls_count(self, status=None):
+        query = {'vendor_id': self.id}
+        if status is not None:
+            query['status'] = status
+        return product_urls_collection.count_documents(query)
 
     def get_products(self, offset=0, limit=1000):
         products = products_collection.aggregate([
@@ -247,6 +250,10 @@ if __name__ == '__main__':
 
     print(vendor.id)
     #
+    product_links = vendor.get_product_urls(status=0)
+    total_products = vendor.get_product_urls_count(status=0)
+    print(total_products)
+
     # products = vendor.get_product_urls()
     # # print(products.batch_size())
     # for p in products:
@@ -256,37 +263,4 @@ if __name__ == '__main__':
     # vendor.bulk_update_product_urls_status(urls, 0)
     # vendor.delete_all_vendor_products()
 
-    products = db.products.aggregate([
-        {
-            '$addFields': {
-                'features_html': {
-                    '$reduce': {
-                        'input': '$variant_features',
-                        'initialValue': '',
-                        'in': {
-                            '$concat': [
-                                '$$value',
-                                '<',
-                                {'$replaceAll': {'input': '$$this.key', 'find': ' ', 'replacement': '_'}},
-                                '>',
-                                '$$this.value',
-                                '</',
-                                {'$replaceAll': {'input': '$$this.key', 'find': ' ', 'replacement': '_'}},
-                                '>',
-                            ]
-                        }
-                    }
-                }
-            }
-        },{
-            '$project':{
-                'features': 1
-            }
-        }
 
-    ])
-
-
-    from pprint import pprint
-    for p in products:
-        print(p)
