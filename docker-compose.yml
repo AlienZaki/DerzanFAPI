@@ -14,6 +14,10 @@ services:
       - REDIS_URI=redis://redis:6379/0
     ports:
       - 80:8000
+    depends_on:
+      - redis
+      - mongodb
+      - celery
 
   celery:
     container_name: celery
