@@ -54,6 +54,7 @@ class VivenseScraper:
         return matches
 
     def update_session_proxy(self):
+        print('=> Update Proxy..')
         if self.proxy:
             self.session = HTMLSession()
             self.session.headers['user-agent'] = ua.google
@@ -183,7 +184,7 @@ class VivenseScraper:
     def get_and_parse_product_details_by_vsin(self, vsin):
         url = f'https://app.vivense.com/products/vsin/{vsin}'
         try:
-            self.update_session_proxy()
+            # self.update_session_proxy()
             r = self.session.get(url)
             data = r.json()['items'][0]
             return self.parse_product_data(data)
@@ -196,7 +197,7 @@ class VivenseScraper:
 
     def get_product_details(self, url):
         try:
-            self.update_session_proxy()
+            # self.update_session_proxy()
             r = self.session.get(url)
             if r.status_code == 200:
                 data = r.json()['items'][0]
@@ -305,6 +306,7 @@ class VivenseScraper:
 
             # Export
             if i % 50 == 0 or i == len(futures):  # len(page)
+                self.update_session_proxy()
                 temp = products_data.copy()
                 products_data = []
                 self.save_products(temp)
