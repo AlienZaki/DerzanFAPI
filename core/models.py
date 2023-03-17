@@ -11,67 +11,18 @@ product_urls_collection,
 
 class Vendor:
     def __init__(self, name, nickname='', category='', language='tr', id=''):
-        self.name = name
+        self.name = name.lower()
         self.nickname = nickname
         self.category = category
         self.language = language
         self.id = id
-
-    @staticmethod
-    def from_dict(vendor_dict):
-        return Vendor(
-            vendor_dict['name'],
-            vendor_dict.get('nickname'),
-            vendor_dict.get('category'),
-            vendor_dict.get('language'),
-            vendor_dict.get('_id')
-        )
-
-    def to_dict(self):
-        vendor_dict = {
-            'name': self.name,
-            'nickname': self.nickname,
-            'category': self.category,
-            'language': self.language,
-        }
-        if self.id:
-            vendor_dict['_id'] = self.id
-        return vendor_dict
-
-    @classmethod
-    def find_by_name(cls, name):
-        vendor_dict = vendors_collection.find_one({'name': name})
-        return cls.from_dict(vendor_dict) if vendor_dict else None
-
-    @classmethod
-    def find_by_id(cls, id):
-        vendor_dict = vendors_collection.find_one({'_id': ObjectId(id)})
-        return cls.from_dict(vendor_dict) if vendor_dict else None
-
-    @classmethod
-    def find_all(cls):
-        vendor_dicts = vendors_collection.find({})
-        return [cls.from_dict(vendor_dict) for vendor_dict in vendor_dicts]
-
-    def save(self):
-        vendor_dict = self.to_dict()
-
-        if self.id:
-            vendors_collection.replace_one({'_id': self.id}, vendor_dict)
-        else:
-            result = vendors_collection.insert_one(vendor_dict)
-            self.id = result.inserted_id
-
-    def delete(self):
-        vendors_collection.delete_one({'_id': self.id})
 
     def get_product_urls(self, status=None):
         query = {'vendor_id': self.id}
         if status is not None:
             query['status'] = status
         cursor = product_urls_collection.find(query).batch_size(1000)
-        # for doc in cursor:
-        #     yield doc
+
         return cursor
 
     def get_product_urls_count(self, status=None):
@@ -176,20 +127,59 @@ class Vendor:
         except errors.BulkWriteError as bwe:
             print('ERROR:', bwe)
 
-    def delete_all_vendor_products(self):
+    def delete_all_products(self):
         # delete all vendor products
         return products_collection.delete_many({'vendor_id': self.id})
 
-    def delete_all_vendor_product_urls(self):
+    def delete_all_product_urls(self):
         # delete all vendor product urls
         return product_urls_collection.delete_many({'vendor_id': self.id})
+
+    def save(self):
+        vendor_dict = self.to_dict()
+        if self.id:
+            vendors_collection.replace_one({'_id': self.id}, vendor_dict)
+        else:
+            result = vendors_collection.insert_one(vendor_dict)
+            self.id = result.inserted_id
+
+    def to_dict(self):
+        vendor_dict = {
+            'name': self.name,
+            'nickname': self.nickname,
+            'category': self.category,
+            'language': self.language,
+        }
+        if self.id:
+            vendor_dict['_id'] = self.id
+        return vendor_dict
+
+    @staticmethod
+    def from_dict(vendor_dict):
+        return Vendor(
+            vendor_dict['name'],
+            vendor_dict.get('nickname'),
+            vendor_dict.get('category'),
+            vendor_dict.get('language'),
+            vendor_dict.get('_id')
+        )
+
+    @classmethod
+    def find_by_name(cls, name):
+        vendor_dict = vendors_collection.find_one({'name': name.lower()})
+        return cls.from_dict(vendor_dict) if vendor_dict else None
+
+    @classmethod
+    def find_by_id(cls, id):
+        vendor_dict = vendors_collection.find_one({'_id': ObjectId(id)})
+        return cls.from_dict(vendor_dict) if vendor_dict else None
 
     def __str__(self):
         return self.name
 
 
 if __name__ == '__main__':
-    vendor_name = 'Vivense'
+    vendor_name = 'vivense'
     vendor = Vendor.find_by_name(vendor_name)
     if not vendor:
         vendor = Vendor(name=vendor_name)
@@ -208,6 +198,6 @@ if __name__ == '__main__':
 
     # urls = [i['url'] for i in products]
     # vendor.bulk_update_product_urls_status(urls, 0)
-    # vendor.delete_all_vendor_products()
+    # vendor.delete_all_products()
 
 

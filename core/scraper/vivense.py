@@ -12,35 +12,50 @@ ua = UserAgent()
 
 
 class VivenseScraper:
+    USER_AGENT = UserAgent()
+    PROXIES = {
+        'http': 'http://brd-customer-hl_24995ae6-zone-data_center:n4r98tzbvxik@zproxy.lum-superproxy.io:22225',
+        'https': 'https://brd-customer-hl_24995ae6-zone-data_center:n4r98tzbvxik@zproxy.lum-superproxy.io:22225'
+    }
 
     def __init__(self, host='localhost:8000', max_workers=10, proxy=False):
-        self.session = HTMLSession()
+        self.session = self.create_session()
         self.host = host
+        self.configure_logging()
+        self.proxy = proxy
+        self.update_session_proxy()
+        self.executor = ThreadPoolExecutor(max_workers=max_workers)
+        self.vendor = self.get_or_create_vendor()
+
+    def configure_logging(self):
         logging.basicConfig(
             level=logging.DEBUG,
             datefmt='%Y-%m-%d %H:%M:%S',
             format='%(asctime)s %(levelname)s %(message)s',
             # filename='logs.log'
         )
-        self.session.headers['user-agent'] = ua.google
-        self.proxies = {
-            'http': 'http://brd-customer-hl_24995ae6-zone-data_center:n4r98tzbvxik@zproxy.lum-superproxy.io:22225',
-            'https': 'https://brd-customer-hl_24995ae6-zone-data_center:n4r98tzbvxik@zproxy.lum-superproxy.io:22225'
-        }
-        self.proxy = proxy
-        self.update_session_proxy()
-        self.executor = ThreadPoolExecutor(max_workers=max_workers)
 
-        # create vendor if not exist
-        vendor_name = 'Vivense'
+    def create_session(self):
+        session = HTMLSession()
+        session.headers['user-agent'] = VivenseScraper.USER_AGENT.google
+        return session
+
+    def get_or_create_vendor(self):
+        vendor_name = 'vivense'
         vendor_nickname = 'Mobilya'
         category = 'Ev ve Bahçe / Mobilya'
 
-        # Get or create vendor
-        self.vendor = Vendor.find_by_name(vendor_name)
-        if not self.vendor:
-            self.vendor = Vendor(name=vendor_name, category=category, nickname=vendor_nickname)
-            self.vendor.save()
+        vendor = Vendor.find_by_name(vendor_name)
+        if not vendor:
+            vendor = Vendor(name=vendor_name, category=category, nickname=vendor_nickname)
+            vendor.save()
+        return vendor
+
+    def update_session_proxy(self):
+        print('=> Update Proxy..')
+        if self.proxy:
+            self.session = self.create_session()
+            self.session.proxies = self.PROXIES
 
     def search_nested_dict(self, nested_dict, search_key):
         """Search for all occurrences of a key in a nested dictionary recursively."""
@@ -56,12 +71,6 @@ class VivenseScraper:
                         matches.extend(self.search_nested_dict(item, search_key))
         return matches
 
-    def update_session_proxy(self):
-        print('=> Update Proxy..')
-        if self.proxy:
-            self.session = HTMLSession()
-            self.session.headers['user-agent'] = ua.google
-            self.session.proxies = self.proxies
 
     def save_products(self, products):
         print('Saving...')
@@ -263,10 +272,10 @@ class VivenseScraper:
         product_links = []
 
         print('=> Deleting Products URLS...')
-        self.vendor.delete_all_vendor_product_urls()
+        self.vendor.delete_all_product_urls()
 
         print('=> Deleting Products...')
-        self.vendor.delete_all_vendor_products()
+        self.vendor.delete_all_products()
 
         # get product urls from categories
         print('=> Getting product urls...')
@@ -322,7 +331,7 @@ if __name__ == '__main__':
     # bot.vendor.products_urls.filter(status=1).update(status=0)
     # bot.vendor.products.all().delete()
 
-    # bot.vendor.delete_all_vendor_products()
+    # bot.vendor.delete_all_products()
 
 
     # SV4-286

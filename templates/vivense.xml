@@ -3,10 +3,8 @@
     <Products>
         {% for product in products %}
         <Product>
-            <Vendor>{{ product.vendor.nickname }}</Vendor>
-            <Language>{{ product.vendor.language }}</Language>
+            <ProductCode>{{ product.code }}</ProductCode>
             <ProductName>{{ product.name }}</ProductName>
-			<ProductCode>{{ product.code }}</ProductCode>
             <MainCategory>{{ product.vendor.category }}</MainCategory>
 			<Category>{{ product.category }}</Category>
             {{product.features_html}}
@@ -20,9 +18,9 @@
 			<Price>{{ product.price }}</Price>
             <stock>{{ stock }}</stock>
 			<Description><![CDATA[{{ product.description|safe }}]]></Description>
-            <URL>{{ product.url }}</URL>
             <Images>{% for img in product.images %}{{ img }}{% if not loop.last %},{% endif %}{% endfor %}</Images>
+            <Vendor>{{ product.vendor.nickname }}</Vendor>
+            <URL>{{ product.url }}</URL>
         </Product>{% endfor %}
     </Products>
 </Root>
-
