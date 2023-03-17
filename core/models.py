@@ -102,6 +102,8 @@ class Vendor:
             for error in bwe.details['writeErrors']:
                 if error['code'] != 11000:  # duplicate error
                     print('ERROR:', error)
+                    raise bwe
+
                 docs.remove(error['op'])    # remove failed docs
         print(f'=> {len(products)} documents - {len(docs)} inserted - {len(products)-len(docs)} failed')
 
