@@ -37,7 +37,7 @@ class VivenseScraper:
 
     def create_session(self):
         session = HTMLSession()
-        session.headers['user-agent'] = VivenseScraper.USER_AGENT.google
+        session.headers['user-agent'] = self.USER_AGENT.google
         return session
 
     def get_or_create_vendor(self):
@@ -336,8 +336,7 @@ if __name__ == '__main__':
 
     # SV4-286
 
-    # products = bot.get_product_details('https://app.vivense.com/products/vsin/TO3-729')
-    # # print(products)
-    # for p in products:
-    #     print(p)
+    products = bot.get_product_details('https://app.vivense.com/products/vsin/TO3-729')
+    for p in products:
+        print(p)
     # bot.save_products(products)
