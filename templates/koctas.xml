@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Root>
+    <Products>
+        {% for product in products %}
+        <Product>
+            <ProductCode>{{ product.code }}</ProductCode>
+            <ProductName>{{ product.name }}</ProductName>
+            <MainCategory>{{ product.vendor.category }}</MainCategory>
+			<Category>{{ product.category }}</Category>
+            {{product.features_html}}
+            <ProductFeatures>
+                {% for attr in product.product_features %}
+                {{ attr.key }}:S[{{ attr.value }}]{% if not loop.last %}; {% endif %}
+                {% endfor %}
+            </ProductFeatures>
+            <VariationGroup>{{ product.variant_group }}</VariationGroup>
+            <VariationFeatures>
+                {% for attr in product.variant_features %}
+                {{ attr.key }}:S[{{ attr.value }}]{% if not loop.last %}; {% endif %}
+                {% endfor %}
+            </VariationFeatures>
+            <ListPrice>{{ product.list_price }}</ListPrice>
+			<Price>{{ product.price }}</Price>
+            <stock>{{ stock }}</stock>
+			<Description><![CDATA[{{ product.description|safe }}]]></Description>
+            <Images>{% for img in product.images %}{{ img }}{% if not loop.last %},{% endif %}{% endfor %}</Images>
+            <Vendor>{{ product.vendor.nickname }}</Vendor>
+            <URL>{{ product.url }}</URL>
+        </Product>{% endfor %}
+    </Products>
+</Root>
