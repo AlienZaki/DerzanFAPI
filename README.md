@@ -1,7 +1,7 @@
-# Derzan Bot
+# Derzan E-commerce Scraper
 
 
-Web scraping bots
+Derzan is a web scraping tool for e-commerce websites. It is designed to scrape product details and prices from various e-commerce websites and stores them in a MongoDB database. It provides APIs to retrieve and export the scraped data.
 
 ## Supported Vendors
 

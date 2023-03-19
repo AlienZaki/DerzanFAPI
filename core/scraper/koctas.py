@@ -44,7 +44,7 @@ class KoctasScraper:
 
     def get_or_create_vendor(self):
         vendor_name = 'koctas'
-        vendor_nickname = 'Mobilya'
+        vendor_nickname = 'Yapi-Insaat'
         category = 'Ev ve Bahçe / Mobilya'
 
         vendor = Vendor.find_by_name(vendor_name)

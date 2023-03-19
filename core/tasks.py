@@ -1,7 +1,6 @@
 from dotenv import load_dotenv
 from celery import Celery
 from core.scraper import ScraperFactory
-from core.scraper.vivense import VivenseScraper
 import os
 
 
