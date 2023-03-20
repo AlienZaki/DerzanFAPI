@@ -4,9 +4,9 @@
         {% for product in products %}
         <Product>
             <ProductCode>{{ product.code }}</ProductCode>
-            <ProductName>{{ product.name }}</ProductName>
-            <MainCategory>{{ product.vendor.category }}</MainCategory>
-			<Category>{{ product.category }}</Category>
+            <ProductName><![CDATA[{{ product.name }}]]></ProductName>
+            <MainCategory><![CDATA[{{ product.vendor.category }}]]></MainCategory>
+			<Category><![CDATA[{{ product.category }}]]></Category>
             {{product.features_html}}
             <ProductFeatures>
                 {% for attr in product.product_features %}
@@ -25,7 +25,7 @@
 			<Description><![CDATA[{{ product.description|safe }}]]></Description>
             <Images>{% for img in product.images %}{{ img }}{% if not loop.last %},{% endif %}{% endfor %}</Images>
             <Vendor>{{ product.vendor.nickname }}</Vendor>
-            <URL>{{ product.url }}</URL>
+            <URL><![CDATA[{{ product.url }}]]></URL>
         </Product>{% endfor %}
     </Products>
 </Root>
