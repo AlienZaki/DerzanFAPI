@@ -267,18 +267,9 @@ class VivenseScraper:
                       for i in links if 'vsin' in i["params"]]
         return categories
 
-    def flush_products_from_db(self):
-        # Update product urls and delete all products
+    def scrape_and_save_categories_products(self):
+        print('=> Getting categories products urls...')
         product_links = []
-
-        print('=> Deleting Products URLS...')
-        self.vendor.delete_all_product_urls()
-
-        print('=> Deleting Products...')
-        self.vendor.delete_all_products()
-
-        # get product urls from categories
-        print('=> Getting product urls...')
         cats = self.get_categories()
         for i, cat in enumerate(cats, 1):
             print(f'=> Categories: [{i}/{len(cats)}]')
@@ -288,9 +279,20 @@ class VivenseScraper:
             if links:
                 self.vendor.bulk_create_product_urls([{'url': i} for i in links])
 
+    def flush_products_from_db(self):
+        print('=> Deleting Products URLS...')
+        self.vendor.delete_all_product_urls()
+
+        print('=> Deleting Products...')
+        self.vendor.delete_all_products()
+
     def run(self, force_refresh=False):
         if force_refresh:
+            # update product urls and delete all products
             self.flush_products_from_db()
+
+            # get product urls from categories
+            self.scrape_and_save_categories_products()
 
         # get products from db
         product_links = self.vendor.get_product_urls(status=0)
