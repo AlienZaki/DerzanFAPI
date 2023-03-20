@@ -54,8 +54,8 @@ class KoctasScraper:
         return vendor
 
     def update_session_proxy(self):
-        print('=> Update Proxy..')
         if self.proxy:
+            print('=> Update Proxy..')
             self.session = self.create_session()
             self.session.proxies = self.PROXIES
 
@@ -191,7 +191,7 @@ class KoctasScraper:
         self.vendor.delete_all_product_urls()
 
         print('=> Deleting Products...')
-        # self.vendor.delete_all_products()
+        self.vendor.delete_all_products()
 
     def run(self, force_refresh=False):
         if force_refresh:
@@ -213,8 +213,6 @@ class KoctasScraper:
             futures.append(self.executor.submit(self.get_product_details, product['url']))
 
         products_data = []
-        # for i, product in enumerate(page, 1):
-        #     product_details = self.get_product_details(product.product_url)
 
         for i, future in enumerate(as_completed(futures), 1):
             counter += 1

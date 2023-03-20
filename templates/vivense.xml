@@ -9,10 +9,10 @@
 			<Category><![CDATA[{{ product.category }}]]></Category>
             {{product.features_html}}
             <VariationGroup>{{ product.variant_group }}</VariationGroup>
-            <VariationFeatures>
+            <VariationFeatures><![CDATA[
                 {% for attr in product.variant_features %}
                 {{ attr.key }}:S[{{ attr.value }}]{% if not loop.last %}; {% endif %}
-                {% endfor %}
+                {% endfor %}]]>
             </VariationFeatures>
             <ListPrice>{{ product.list_price }}</ListPrice>
 			<Price>{{ product.price }}</Price>

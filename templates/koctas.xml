@@ -8,17 +8,20 @@
             <MainCategory><![CDATA[{{ product.vendor.category }}]]></MainCategory>
 			<Category><![CDATA[{{ product.category }}]]></Category>
             {{product.features_html}}
-            <ProductFeatures>
+            {% if product.product_features %}
+            <ProductFeatures><![CDATA[
                 {% for attr in product.product_features %}
                 {{ attr.key }}:S[{{ attr.value }}]{% if not loop.last %}; {% endif %}
-                {% endfor %}
-            </ProductFeatures>
-            <VariationGroup>{{ product.variant_group }}</VariationGroup>
-            <VariationFeatures>
+                {% endfor %}]]>
+             </ProductFeatures>{% endif %}
+            {% if product.variant_group %}
+            <VariationGroup>{{ product.variant_group }}</VariationGroup>{% endif %}
+            {% if product.variant_features %}
+            <VariationFeatures><![CDATA[
                 {% for attr in product.variant_features %}
                 {{ attr.key }}:S[{{ attr.value }}]{% if not loop.last %}; {% endif %}
-                {% endfor %}
-            </VariationFeatures>
+                {% endfor %}]]>
+            </VariationFeatures>{% endif %}
             <ListPrice>{{ product.list_price }}</ListPrice>
 			<Price>{{ product.price }}</Price>
             <stock>{{ stock }}</stock>
