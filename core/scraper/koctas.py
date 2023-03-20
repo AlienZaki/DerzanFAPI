@@ -137,7 +137,7 @@ class KoctasScraper:
             traceback.print_exc()
             print('ERROR:', url)
 
-    def get_product_links(self, page_url):
+    def get_page_products(self, page_url):
         products_urls = []
         try:
             r = self.session.get(page_url)
@@ -152,55 +152,54 @@ class KoctasScraper:
             print('ERROR URL:', page_url)
             return products_urls
 
-    def get_category_products(self, category_url):
-        r = self.session.get(category_url)
-        last_page = r.json()['results']['pagination']['totalPages']
-
-
-        # get category pagination
-        pagination = [f'{category_url}&currentPage={i}' for i in range(0, last_page + 1)]
-        logging.info(f'Pages found: {len(pagination)}')
-
-        # get product links from pagination
-        futures = []
-        product_links = []
-        for page in pagination:
-            futures.append(self.executor.submit(self.get_product_links, page))
-        for future in as_completed(futures):
-            product_links.extend(future.result())
-        logging.info(f'Product links found: {len(product_links)}')
-        return product_links
-
     def get_categories(self):
         r = self.session.get('https://occ2.koctas.com.tr/koctaswebservices/v2/koctas/categoryNavigationComponent')
         categories = [f'https://occ2.koctas.com.tr/koctaswebservices/v2/koctas/search?pageSize=100&q=::category:{i["code"]}'
                       for i in r.json()['categoryListWsDTO']]
         return categories
 
-    def flush_products_from_db(self):
-        # Update product urls and delete all products
-        product_links = []
+    def scrape_and_save_categories_products(self):
+        print('=> Getting categories products urls...')
+        print('=> Getting product urls...')
+        cats = ['https://occ2.koctas.com.tr/koctaswebservices/v2/koctas/search?pageSize=100']
+        cats.extend(self.get_categories())
 
+        for category_url in cats:
+            r = self.session.get(category_url)
+            last_page = r.json()['results']['pagination']['totalPages']
+
+            # get category pagination
+            pagination = [f'{category_url}&currentPage={i}' for i in range(0, last_page + 1)]
+            logging.info(f'Pages found: {len(pagination)}')
+
+            # get product links from pagination
+            futures = []
+            for page in pagination:
+                futures.append(self.executor.submit(self.get_page_products, page))
+            for future in as_completed(futures):
+                product_links = future.result()
+                # save product urls
+                if product_links:
+                    self.vendor.bulk_create_product_urls([{'url': i} for i in product_links])
+            logging.info(f'Product links found: {len(product_links)}')
+
+
+
+
+    def flush_products_from_db(self):
         print('=> Deleting Products URLS...')
         self.vendor.delete_all_product_urls()
 
         print('=> Deleting Products...')
-        self.vendor.delete_all_products()
-
-        # get product urls from categories
-        print('=> Getting product urls...')
-        cats = self.get_categories()
-        for i, cat in enumerate(cats, 1):
-            print(f'=> Categories: [{i}/{len(cats)}]')
-            links = self.get_category_products(cat)
-            product_links.extend(links)
-            # save product urls
-            if links:
-                self.vendor.bulk_create_product_urls([{'url': i} for i in links])
+        # self.vendor.delete_all_products()
 
     def run(self, force_refresh=False):
         if force_refresh:
+            # update product urls and delete all products
             self.flush_products_from_db()
+
+            # get product urls from categories
+            self.scrape_and_save_categories_products()
 
         # get products from db
         product_links = self.vendor.get_product_urls(status=0)
@@ -235,8 +234,8 @@ class KoctasScraper:
 
 
 if __name__ == '__main__':
-    bot = KoctasScraper(max_workers=1, proxy=False)
-    # bot.run(force_refresh=False)
+    bot = KoctasScraper(max_workers=10, proxy=False)
+    bot.run(force_refresh=True)
 
 
 
@@ -245,9 +244,9 @@ if __name__ == '__main__':
 
     # SV4-286
 
-    products = bot.get_product_details('https://occ2.koctas.com.tr/koctaswebservices/v2/koctas/products/1000031443?cartId=&uid=anonymous')
-    for p in products:
-        print(p)
+    # products = bot.get_product_details('https://occ2.koctas.com.tr/koctaswebservices/v2/koctas/products/1000031443?cartId=&uid=anonymous')
+    # for p in products:
+    #     print(p)
     # bot.save_products(products)
     #
     #
