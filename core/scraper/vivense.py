@@ -52,8 +52,8 @@ class VivenseScraper:
         return vendor
 
     def update_session_proxy(self):
-        print('=> Update Proxy..')
         if self.proxy:
+            print('=> Update Proxy..')
             self.session = self.create_session()
             self.session.proxies = self.PROXIES
 
@@ -127,7 +127,7 @@ class VivenseScraper:
         if variant_group := p.get('variantGroup'):
             for group in variant_group['groups']:
                 attribute = group['attribute']
-                attr_key, attr_type = attribute['title']['tr'], attribute['attributeType']
+                attr_key, attr_type = attribute['title']['tr'].replace(':', ''), attribute['attributeType']
                 for product in [i for i in group['products'] if i['product']['vsin'] == p['vsin']]:
                     attr_values = product['attributeValues']
                     attr_value = self.get_attribute_value(type=attr_type, values=attr_values)
@@ -325,8 +325,8 @@ class VivenseScraper:
 
 
 if __name__ == '__main__':
-    bot = VivenseScraper(max_workers=10, proxy=True)
-    bot.run(force_refresh=False)
+    bot = VivenseScraper(max_workers=10, proxy=False)
+    # bot.run(force_refresh=False)
 
     # bot.vendor.products_urls.filter(status=1).update(status=0)
     # bot.vendor.products.all().delete()
@@ -336,7 +336,7 @@ if __name__ == '__main__':
 
     # SV4-286
 
-    products = bot.get_product_details('https://app.vivense.com/products/vsin/TO3-729')
+    products = bot.get_product_details('https://app.vivense.com/products/vsin/FA6-260')
     for p in products:
         print(p)
     # bot.save_products(products)
