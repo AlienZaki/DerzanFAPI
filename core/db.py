@@ -8,7 +8,8 @@ import pprint
 
 load_dotenv()
 config = os.environ
-client = MongoClient(config['MONGO_URI'] + '?keepAlive=true&socketTimeoutMS=360000&connectTimeoutMS=360000')
+url = config['MONGO_URI'] + '?socketTimeoutMS=360000&connectTimeoutMS=360000'
+client = MongoClient(url)
 db = client['derzandb']
 vendors_collection = db['vendors']
 products_collection = db['products']
@@ -141,6 +142,23 @@ def migrate_product_urls_collection():
     product_urls_collection.create_index([('url', ASCENDING)], unique=True)
     product_urls_collection.create_index([('vendor_id', ASCENDING), ('status', ASCENDING)])
 
+def migrate_translation_memory_collection():
+    print('=> Migrating translation memory..')
+    try:
+        trans_memory_collection = db.create_collection('translation_memory')
+    except:
+        trans_memory_collection = db.translation_memory
+    trans_memory_validator = {
+        '$jsonSchema': {
+            'bsonType': 'object',
+            'required': ['source_text', 'source_lang', 'target_text', 'target_lang'],
+        }
+    }
+    # apply schema
+    db.command('collMod', 'translation_memory', validator=trans_memory_validator)
+    # index creation
+    trans_memory_collection.create_index([('source_text', ASCENDING), ('source_lang', ASCENDING), ('target_lang', ASCENDING)], unique=True)
+
 
 def migrate_all_collections():
     # migrate vendor collection
@@ -152,8 +170,11 @@ def migrate_all_collections():
     # migrate product URLs collection
     migrate_product_urls_collection()
 
+    # migrate translation memory collection
+    migrate_translation_memory_collection()
+
     print('=> Migrations completed!')
 
 
 if __name__ == '__main__':
-    print(len(products_collection.distinct('description')))
+    migrate_all_collections()

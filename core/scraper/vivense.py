@@ -83,7 +83,7 @@ class VivenseScraper:
                 try:
                     # bulk save products
                     self.vendor.bulk_create_products(product_list)
-                    # update product urls status to 1 as scraped flag
+                    # update product urls status to_lang 1 as scraped flag
                     self.vendor.bulk_update_product_urls_status(urls=product_urls, status=1)
                     # commit
                     session.commit_transaction()
@@ -133,15 +133,15 @@ class VivenseScraper:
                     attr_value = self.get_attribute_value(type=attr_type, values=attr_values)
                     data['variant_features'].append({'key': attr_key, 'value': attr_value})
 
-        # data['variant_key'] = p['variantGroup'] and p['variantGroup']['groups'][0]['attribute']['title']['tr']
-        # attribute_type = p['variantGroup'] and p['variantGroup']['groups'][0]['attribute']['attributeType']
-        # data['variant_value'] = p['variantGroup'] and [self.get_attribute_value(type=attribute_type, values=i['attributeValues']) for i in p['variantGroup']['groups'][0]['products'] if i['product']['vsin'] == p['vsin']]
+        # data['variant_key'] = product['variantGroup'] and product['variantGroup']['groups'][0]['attribute']['title']['tr']
+        # attribute_type = product['variantGroup'] and product['variantGroup']['groups'][0]['attribute']['attributeType']
+        # data['variant_value'] = product['variantGroup'] and [self.get_attribute_value(type=attribute_type, values=i['attributeValues']) for i in product['variantGroup']['groups'][0]['products'] if i['product']['vsin'] == product['vsin']]
         # data['variant_value'] = data['variant_value'] and data['variant_value'][0]
 
 
 
 
-        # print(p)
+        # print(product)
         attributes = []
         for a in p['attributes']:
             key = a['title']['tr']

@@ -70,7 +70,7 @@ class KoctasScraper:
                 try:
                     # bulk save products
                     self.vendor.bulk_create_products(product_list)
-                    # update product urls status to 1 as scraped flag
+                    # update product urls status to_lang 1 as scraped flag
                     self.vendor.bulk_update_product_urls_status(urls=product_urls, status=1)
                     # commit
                     session.commit_transaction()
@@ -243,8 +243,8 @@ if __name__ == '__main__':
     # SV4-286
 
     # products = bot.get_product_details('https://occ2.koctas.com.tr/koctaswebservices/v2/koctas/products/1000031443?cartId=&uid=anonymous')
-    # for p in products:
-    #     print(p)
+    # for product in products:
+    #     print(product)
     # bot.save_products(products)
     #
     #

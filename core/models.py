@@ -2,10 +2,10 @@ import pprint
 from bson import ObjectId
 from pymongo import errors
 from core.db import (
-db,
-vendors_collection,
-products_collection,
-product_urls_collection,
+    db,
+    vendors_collection,
+    products_collection,
+    product_urls_collection,
 )
 
 
@@ -31,11 +31,11 @@ class Vendor:
             query['status'] = status
         return product_urls_collection.count_documents(query)
 
-    def get_products(self, offset=0, limit=1000):
+    def get_products(self, offset=0, limit=1000, not_translated=False, lang=None):
         if limit == -1:
             limit = self.get_products_count()
 
-        products = products_collection.aggregate([
+        query = [
             {
                 '$match': {
                     'vendor_id': self.id
@@ -57,7 +57,6 @@ class Vendor:
             },
             {
                 '$project': {
-                    '_id': 0,
                     'vendor_id': 0,
                 }
             },
@@ -82,10 +81,49 @@ class Vendor:
                         }
                     }
                 }
+            }
+        ]
+
+        if not_translated:
+            query.append({
+                '$match': {
+                    f'translation.{lang}': {'$exists': False}
+                }
+            })
+
+        query.append({'$skip': offset})
+        query.append({'$limit': limit})
+
+        products = products_collection.aggregate(query)
+        return products
+
+    def get_translated_products(self, lang, offset=0, limit=1000):
+        query = [
+            {
+                '$match': {
+                    'vendor_id': self.id,
+                    'translation': {'$exists': True},
+                    f'translation.{lang}': {'$exists': True}
+                }
             },
-            {'$skip': offset},
-            {'$limit': limit}
-        ])
+            {
+                '$project': {
+                    '_id': 1,
+                    'code': 1,
+                    'name': 1,
+                    'description': 1,
+                    'translation': 1,
+                }
+            },
+            {
+                '$skip': offset
+             }
+        ]
+
+        if limit:
+            query.append({'$limit': limit})
+
+        products = products_collection.aggregate(query)
         return products
 
     def get_products_count(self):
@@ -104,8 +142,8 @@ class Vendor:
                     print('ERROR:', error)
                     raise bwe
 
-                docs.remove(error['op'])    # remove failed docs
-        print(f'=> {len(products)} documents - {len(docs)} inserted - {len(products)-len(docs)} failed')
+                docs.remove(error['op'])  # remove failed docs
+        print(f'=> {len(products)} documents - {len(docs)} inserted - {len(products) - len(docs)} failed')
 
     def bulk_create_product_urls(self, product_urls):
         # print('=> inserting product urls...')
@@ -120,12 +158,18 @@ class Vendor:
             for error in bwe.details['writeErrors']:
                 print(error['errmsg'])
                 docs.remove(error['op'])  # remove failed docs
-        print(f'=> {len(product_urls)} documents - {len(docs)} inserted - {len(product_urls)-len(docs)} failed')
+        print(f'=> {len(product_urls)} documents - {len(docs)} inserted - {len(product_urls) - len(docs)} failed')
 
     def bulk_update_product_urls_status(self, urls, status):
         # print('=> Updating product urls status...')
         try:
             product_urls_collection.update_many({'url': {'$in': urls}}, {'$set': {'status': status}})
+        except errors.BulkWriteError as bwe:
+            print('ERROR:', bwe)
+
+    def add_product_translation(self, proudct_id, lang, translation):
+        try:
+            products_collection.update_one({'_id': proudct_id}, {'$set': {f'translation.{lang}': translation}})
         except errors.BulkWriteError as bwe:
             print('ERROR:', bwe)
 
@@ -176,6 +220,11 @@ class Vendor:
         vendor_dict = vendors_collection.find_one({'_id': ObjectId(id)})
         return cls.from_dict(vendor_dict) if vendor_dict else None
 
+    @classmethod
+    def get_all(cls):
+        vendor_dict_list = vendors_collection.find()
+        return [cls.from_dict(vendor_dict) for vendor_dict in vendor_dict_list] if vendor_dict_list else None
+
     def __str__(self):
         return self.name
 
@@ -188,18 +237,35 @@ if __name__ == '__main__':
         vendor.save()
 
     print(vendor.id)
+
+    # for p in vendor.get_translated_products('ar'):
+    #     print(p)
+
+    from bson.objectid import ObjectId
+
+    # products_collection.update_many(
+    #     {"vendor_id": ObjectId('641251775981a1a080731f28')},
+    #     {"$unset": {"translation.ar": ""}}
+    # )
+
+
     #
-    product_links = vendor.get_product_urls(status=0)
-    total_products = vendor.get_product_urls_count(status=0)
-    print(total_products)
+    # product_links = vendor.get_product_urls(status=0)
+    # total_products = vendor.get_product_urls_count(status=0)
+    # print(total_products)
+
+    # id = ObjectId('641255a6ff9cbf6d76d8e307')
+    # translation = {
+    #     'name': 'Name2',
+    #     'description': 'Description2'
+    # }
+    # vendor.add_product_translation(id, 'ar', translation)
 
     # products = vendor.get_product_urls()
     # # print(products.batch_size())
-    # for p in products:
-    #     print(p)
+    # for product in products:
+    #     print(product)
 
     # urls = [i['url'] for i in products]
     # vendor.bulk_update_product_urls_status(urls, 0)
     # vendor.delete_all_products()
-
-

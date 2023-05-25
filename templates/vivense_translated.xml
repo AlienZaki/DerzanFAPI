@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Root>
+    <Products>
+        {% for product in products %}
+        <Product>
+            <ProductCode>{{ product.code }}</ProductCode>
+            <Language>{{ lang }}</Language>
+            <OriginalProductName><![CDATA[{{ product.name }}]]></OriginalProductName>
+            <ProductName><![CDATA[{{ product.translation[lang].name }}]]></ProductName>
+            <Description><![CDATA[{{ product.translation[lang].description }}]]></Description>
+        </Product>{% endfor %}
+    </Products>
+</Root>
