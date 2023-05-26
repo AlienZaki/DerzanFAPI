@@ -1,5 +1,5 @@
 from bson import ObjectId, json_util
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException, Query
 from fastapi.responses import Response, StreamingResponse
 from dotenv import load_dotenv
 from pymongo import ReturnDocument
@@ -185,17 +185,24 @@ async def get_translations(page: int = 0, per_page: int = 25,
                            source_text: Optional[str] = None,
                            source_lang: Optional[str] = None,
                            target_text: Optional[str] = None,
-                           target_lang: Optional[str] = None):
+                           target_lang: Optional[str] = None,
+                           search: Optional[str] = Query(None)):
     skip = page * per_page
     translation_query = {}
-    if source_text:
-        translation_query['source_text'] = {'$regex': source_text}
-    if source_lang:
-        translation_query['source_lang'] = source_lang
-    if target_text:
-        translation_query['target_text'] = {'$regex': target_text}
-    if target_lang:
-        translation_query['target_lang'] = target_lang
+    if search:
+        translation_query['$or'] = [
+            {'source_text': {'$regex': search, '$options': 'i'}},
+            {'target_text': {'$regex': search, '$options': 'i'}}
+        ]
+    else:
+        if source_text:
+            translation_query['source_text'] = {'$regex': source_text}
+        if source_lang:
+            translation_query['source_lang'] = source_lang
+        if target_text:
+            translation_query['target_text'] = {'$regex': target_text}
+        if target_lang:
+            translation_query['target_lang'] = target_lang
 
     translations = list(collection.find(translation_query).skip(skip).limit(per_page))
     for translation in translations:

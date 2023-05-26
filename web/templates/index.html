@@ -140,7 +140,7 @@
                     <div class="col-sm-6 p-md-0">
                         <div class="welcome-text">
                             <h4>Hi, welcome back!</h4>
-                            <span>Datatable</span>
+                            <span>Translation</span>
                         </div>
                     </div>
                     <div class="col-sm-6 p-md-0 justify-content-sm-end mt-2 mt-sm-0 d-flex">
@@ -160,6 +160,18 @@
                                 <h4 class="card-title">Translation</h4>
                             </div>
                             <div class="card-body">
+                                <div class="row">
+                                    <div class="col-4">
+                                    <div class="input-group mb-3">
+                                        <input type="text" class="form-control" id="search-input" placeholder="Search">
+                                        <button class="btn btn-outline-primary" type="button" onclick="getTranslations()">Search</button>
+                                    </div>
+                                        </div>
+                                </div>
+
+
+
+
                                 <div class="table-responsive">
                                     <table id="translation-table" class="table header-border table-responsive-sm">
                                         <thead>
@@ -264,11 +276,18 @@
                 // Clear the existing table content.
                 $('#translation-table tbody').empty();
 
+                var search = $('#search-input').val();
                 $.ajax({
-                    url: 'http://165.22.19.183/translations?page=' + page + '&per_page=' + per_page,
+                    url: '/translations/',
                     type: 'GET',
+                    dataType: 'json',
+                    data: {
+                        page: page,
+                        per_page: per_page,
+                        search: search
+                    },
                     success: function(data) {
-                        ;
+
                         for (var i = 0; i < data.items.length; i++) {
                             var tr = "<tr data-id='" + data.items[i].id + "'>"; // Storing the translation_id in data-id attribute.
                             tr += "<td>" + data.items[i].source_lang + "</td>";
