@@ -296,7 +296,7 @@
         $(document).ready(function() {
             function getTranslations() {
                 $.ajax({
-                    url: 'http://localhost:8000/translations', // replace with your FastAPI app URL
+                    url: 'http://165.22.19.183/translations', // replace with your FastAPI app URL
                     type: 'GET',
                     success: function(data) {
                         data = data.items;
