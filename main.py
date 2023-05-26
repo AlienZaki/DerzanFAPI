@@ -14,6 +14,10 @@ from typing import Optional, List
 from pydantic import BaseModel, Field, validator
 from typing import List, Optional
 from datetime import datetime
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 
 
 # load environment variables
@@ -27,6 +31,23 @@ env = Environment(loader=FileSystemLoader('templates'))
 migrate_all_collections()
 
 app = FastAPI()
+
+app.mount("/web/static", StaticFiles(directory="web/static"), name="static")
+templates = Jinja2Templates(directory="web/templates")
+
+# CORS Configuration
+origins = [
+    "*",  # Change this to the domain of your frontend application
+    # "https://example-frontend.com",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/")
@@ -151,7 +172,15 @@ async def update_translation(translation_id: str, translation_item: TranslationU
     updated_translation["id"] = str(updated_translation["_id"])
     return updated_translation
 
-@app.get('/translations/', response_model=List[TranslationItem])
+
+class Pagination(BaseModel):
+    total: int
+    items: List[TranslationItem]
+    page: int
+    per_page: int
+
+
+@app.get('/translations/', response_model=Pagination)
 async def get_translations(page: int = 0, per_page: int = 10,
                            source_text: Optional[str] = None,
                            source_lang: Optional[str] = None,
@@ -171,7 +200,14 @@ async def get_translations(page: int = 0, per_page: int = 10,
     translations = list(collection.find(translation_query).skip(skip).limit(per_page))
     for translation in translations:
         translation['id'] = str(translation['_id'])
-    return translations
+
+    total = collection.count_documents(translation_query)
+    response = Pagination(total=total, items=translations, page=page, per_page=per_page)
+    return response
+
+@app.get("/tm", response_class=HTMLResponse)
+async def read_item(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
 
 if __name__ == '__main__':
     import uvicorn
