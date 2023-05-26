@@ -177,26 +177,13 @@
                                         </tbody>
                                     </table>
                                 </div>
-                                <!-- <div class="table-responsive">
-                                    <table id="translation-table" class="table header-border table-responsive-sm">
-                                        <thead>
-                                            <tr>
-                                                <th>From Lang</th>
-                                                <th>To Lang</th>
-                                                <th>Original Text</th>
-                                                <th>Translation</th>
-                                                <th>Status</th>
-                                                <th>Last Update</th>
-                                                <th>Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            
-                                        </tbody>
-                                    </table>
-                                </div> -->
                             </div>
-                        </div>
+                            <div class="modal-footer">
+                                <nav>
+                                    <ul class="pagination" id="pagination">
+                                    </ul>
+                                </nav>
+                            </div>
                     </div>
 				</div>
             </div>
@@ -219,8 +206,6 @@
         ***********************************-->
 
 
-
-        
     </div>
 
     <!-- Modal -->
@@ -251,37 +236,6 @@
             </div>
         </div>
     </div>
-    
-
-    <!-- Modal -->
-    <div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="editModalLabel">Edit Translation</h5>
-                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <form id="editForm">
-                        <div class="form-group">
-                            <label for="source_text">Source Text</label>
-                            <input type="text" class="form-control" id="source_text" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label for="target_text">Target Text</label>
-                            <input type="text" class="form-control" id="target_text">
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary" id="saveChanges">Save changes</button>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!--**********************************
         Main wrapper end
@@ -301,24 +255,24 @@
 
     <!-- Custom JavaScript -->
     <script>
-        function getTranslations() {
+        function getTranslations(page, per_page) {
                 // Clear the existing table content.
                 $('#translation-table tbody').empty();
 
                 $.ajax({
-                    url: 'http://165.22.19.183/translations', // replace with your FastAPI app URL
+                    url: 'http://165.22.19.183/translations?page=' + page + '&per_page=' + per_page,
                     type: 'GET',
                     success: function(data) {
-                        data = data.items;
-                        for (var i = 0; i < data.length; i++) {
-                            var tr = "<tr data-id='" + data[i].id + "'>"; // Storing the translation_id in data-id attribute.
-                            tr += "<td>" + data[i].source_lang + "</td>";
-                            tr += "<td>" + data[i].target_lang + "</td>";
-                            tr += "<td>" + data[i].source_text + "</td>";
-                            tr += "<td>" + data[i].target_text + "</td>";
-                            if (data[i].last_update) {
+                        ;
+                        for (var i = 0; i < data.items.length; i++) {
+                            var tr = "<tr data-id='" + data.items[i].id + "'>"; // Storing the translation_id in data-id attribute.
+                            tr += "<td>" + data.items[i].source_lang + "</td>";
+                            tr += "<td>" + data.items[i].target_lang + "</td>";
+                            tr += "<td>" + data.items[i].source_text + "</td>";
+                            tr += "<td>" + data.items[i].target_text + "</td>";
+                            if (data.items[i].last_update) {
                                 tr += "<td><span class='badge light badge-success'><i class='fa fa-circle text-success me-1'></i>Updated</span></td>";
-                                tr += "<td>" + data[i].last_update + "</td>";
+                                tr += "<td>" + data.items[i].last_update + "</td>";
                             } else {
                                 tr += "<td><span class='badge badge-light'><i class='fa fa-circle text-dark me-1'></i>Default</span></td>";
                                 tr += "<td></td>";
@@ -328,6 +282,59 @@
                             tr += "</tr>";
                             $('#translation-table tbody').append(tr);
                         }
+
+                        // Clear the existing pagination links.
+                        $('#pagination').empty();
+
+                        console.log(data.total);
+                        console.log(data.per_page);
+                        // Generate pagination links.
+                        // Calculate the total number of pages.
+    var totalPages = Math.ceil(data.total / data.per_page);
+
+    // Determine the range of pages to display.
+    var startPage = Math.max(data.page, 1);
+    var endPage = Math.min(startPage + 3, totalPages);
+
+    // Generate '<<' link for the first page.
+    if (data.page > 0) {
+        var li = "<li class='page-item'>" +
+                    "<a class='page-link' href='javascript:void(0)' onclick='getTranslations(0, " + data.per_page + ")'><<</a>" +
+                 "</li>";
+        $('#pagination').append(li);
+    }
+
+    // Generate '<' link for the previous page.
+    if (data.page > 0) {
+        var li = "<li class='page-item'>" +
+                    "<a class='page-link' href='javascript:void(0)' onclick='getTranslations(" + (data.page - 1) + ", " + data.per_page + ")'><</a>" +
+                 "</li>";
+        $('#pagination').append(li);
+    }
+
+    // Generate page links.
+    for (var i = startPage; i <= endPage; i++) {
+        var li = "<li class='page-item" + (i === data.page + 1 ? " active" : "") + "'>" +
+                    "<a class='page-link' href='javascript:void(0)' onclick='getTranslations(" + (i - 1) + ", " + data.per_page + ")'>" + i + "</a>" +
+                 "</li>";
+        $('#pagination').append(li);
+    }
+
+    // Generate '>' link for the next page.
+    if (data.page + 1 < totalPages) {
+        var li = "<li class='page-item'>" +
+                    "<a class='page-link' href='javascript:void(0)' onclick='getTranslations(" + (data.page + 1) + ", " + data.per_page + ")'>></a>" +
+                 "</li>";
+        $('#pagination').append(li);
+    }
+
+    // Generate '>>' link for the last page.
+    if (endPage < totalPages) {
+        var li = "<li class='page-item'>" +
+                    "<a class='page-link' href='javascript:void(0)' onclick='getTranslations(" + (totalPages - 1) + ", " + data.per_page + ")'>>></a>" +
+                 "</li>";
+        $('#pagination').append(li);
+    }
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
                         console.error(textStatus, errorThrown);
@@ -337,7 +344,7 @@
 
         $(document).ready(function() {
             // Initial load
-            getTranslations();
+            getTranslations(0, 50);
         });
 
             // Handle click on edit button.
@@ -382,6 +389,8 @@
             }
         });
     });
+
+
 
 
     </script>
