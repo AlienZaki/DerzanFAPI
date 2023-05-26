@@ -224,7 +224,7 @@
     </div>
 
     <!-- Modal -->
-    <div class="modal fade" id="exampleModalCenter">
+    <div class="modal fade" id="editModal">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -283,7 +283,6 @@
         </div>
     </div>
 
-
     <!--**********************************
         Main wrapper end
     ***********************************-->
@@ -291,17 +290,28 @@
     <!--**********************************
         Scripts
     ***********************************-->
+    <!-- Required vendors -->
+    <script src="{{ url_for('static', path='./vendor/global/global.min.js')}}"></script>
+	<script src="{{ url_for('static', path='./vendor/bootstrap-select/dist/js/bootstrap-select.min.js')}}"></script>
+    <!-- Datatable -->
+    <script src="{{ url_for('static', path='./vendor/datatables/js/jquery.dataTables.min.js')}}"></script>
+    <script src="{{ url_for('static', path='./js/plugins-init/datatables.init.js')}}"></script>
+    <script src="{{ url_for('static', path='./js/custom.js')}}"></script>
+	<script src="{{ url_for('static', path='./js/deznav-init.js')}}"></script>
+
     <!-- Custom JavaScript -->
     <script>
-        $(document).ready(function() {
-            function getTranslations() {
+        function getTranslations() {
+                // Clear the existing table content.
+                $('#translation-table tbody').empty();
+
                 $.ajax({
                     url: 'http://165.22.19.183/translations', // replace with your FastAPI app URL
                     type: 'GET',
                     success: function(data) {
                         data = data.items;
                         for (var i = 0; i < data.length; i++) {
-                            var tr = "<tr>";
+                            var tr = "<tr data-id='" + data[i].id + "'>"; // Storing the translation_id in data-id attribute.
                             tr += "<td>" + data[i].source_lang + "</td>";
                             tr += "<td>" + data[i].target_lang + "</td>";
                             tr += "<td>" + data[i].source_text + "</td>";
@@ -313,9 +323,8 @@
                                 tr += "<td><span class='badge light badge-warning'><i class='fa fa-circle text-warning me-1'></i>Auto</span></td>";
                                 tr += "<td></td>";
                             }
-                    
-                            
-                            tr += "<td><div class='d-flex'><a href='#' class='btn btn-primary shadow btn-xs sharp me-1 edit-btn' data-bs-toggle='modal' data-bs-target='#exampleModalCenter'><i class='fas fa-pencil-alt'></i></a></div></td>";
+
+                            tr += "<td><div class='d-flex'><a href='#' class='btn btn-primary shadow btn-xs sharp me-1 edit-btn' data-bs-toggle='modal' data-bs-target='#editModal'><i class='fas fa-pencil-alt'></i></a></div></td>";
                             tr += "</tr>";
                             $('#translation-table tbody').append(tr);
                         }
@@ -325,60 +334,60 @@
                     }
                 });
             }
-    
+
+        $(document).ready(function() {
             // Initial load
             getTranslations();
         });
 
+            // Handle click on edit button.
+    $('body').on('click', '.edit-btn', function() {
+        var row = $(this).closest('tr');
+        var source_text = row.find('td:nth-child(3)').text();
+        var target_text = row.find('td:nth-child(4)').text();
+        var translation_id = row.data('id');  // Retrieve translation_id stored in data-id attribute.
+        
+        // Load data into the modal.
+        $('#editForm #source_text').val(source_text);
+        $('#editForm #target_text').val(target_text);
+        $('#editForm').data('id', translation_id);  // Store translation_id in the form for later use.
 
-//         $('#translation-table').DataTable({
-//     processing: true,
-//     serverSide: true,
-//     ajax: {
-//         url: 'http://localhost:8000/translations', // replace with your API URL
-//         data: function (d) {
-//             d.page = d.start / d.length + 1; // Calculate the page number based on the start and length parameters
-//             d.limit = d.length; // Set the limit to the length parameter
-//         },
-//         dataFilter: function(data) {
-//             // The API response needs to be transformed for DataTables
-//             var data = JSON.parse(data);
-//             return JSON.stringify({
-//                 recordsTotal: data.total,
-//                 recordsFiltered: data.total,
-//                 data: data.items
-//             });
-//         }
-//     },
-//     columns: [
-//         { data: 'source_lang' },
-//         { data: 'target_lang' },
-//         { data: 'source_text' },
-//         { data: 'target_text' },
-//         { data: 'last_update' },
-//         { 
-//             data: null, 
-//             render: function ( data, type, row ) {
-//                 return '<div class="d-flex"><a href="#" class="btn btn-primary shadow btn-xs sharp me-1 edit-btn"><i class="fas fa-pencil-alt"></i></a></div>';
-//             }
-//         },
-//     ]
-// });
+    });
+
+    // Handle save changes.
+    $('#saveChanges').on('click', function() {
+        var source_text = $('#editForm #source_text').val();
+        var target_text = $('#editForm #target_text').val();
+        var translation_id = $('#editForm').data('id');  // Retrieve translation_id from the form.
 
 
+        // Make a PUT request to update the translation.
+        $.ajax({
+            url: 'http://165.22.19.183/translations/'+ translation_id,  // Replace with your FastAPI app URL and the right endpoint to update a translation.
+            type: 'PUT',
+            data: JSON.stringify({
+                'source_text': source_text,
+                'target_text': target_text
+            }),
+            contentType: "application/json; charset=utf-8",
+            success: function() {
+                // Close the modal.
+                $('#editModal').modal('hide');
+
+                // Refresh the translations table.
+                getTranslations();
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                console.error(textStatus, errorThrown);
+            }
+        });
+    });
 
 
-        </script>
+    </script>
 
 
-    <!-- Required vendors -->
-    <script src="{{ url_for('static', path='./vendor/global/global.min.js')}}"></script>
-	<script src="{{ url_for('static', path='./vendor/bootstrap-select/dist/js/bootstrap-select.min.js')}}"></script>
-    <!-- Datatable -->
-    <script src="{{ url_for('static', path='./vendor/datatables/js/jquery.dataTables.min.js')}}"></script>
-    <script src="{{ url_for('static', path='./js/plugins-init/datatables.init.js')}}"></script>
-    <script src="{{ url_for('static', path='./js/custom.js')}}"></script>
-	<script src="{{ url_for('static', path='./js/deznav-init.js')}}"></script>
+
 
 
 

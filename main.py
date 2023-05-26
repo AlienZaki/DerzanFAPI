@@ -181,7 +181,7 @@ class Pagination(BaseModel):
 
 
 @app.get('/translations/', response_model=Pagination)
-async def get_translations(page: int = 0, per_page: int = 10,
+async def get_translations(page: int = 0, per_page: int = 25,
                            source_text: Optional[str] = None,
                            source_lang: Optional[str] = None,
                            target_text: Optional[str] = None,
