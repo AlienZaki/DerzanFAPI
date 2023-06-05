@@ -25,5 +25,6 @@ class TM:
 if __name__ == '__main__':
     tm = TM()
     # print(tm.save_translation('zaki', 'en', 'زكى', 'ar'))
-    print(tm.get_translation('zaki', 'en', 'ar'))
+    # print(tm.get_translation('zaki', 'en', 'ar'))
+    db['translation_memory'].update_many({}, {"$set": {"target_lang": "ar"}})
 
