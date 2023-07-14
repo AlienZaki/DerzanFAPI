@@ -3,6 +3,7 @@
     <Products>
         {% for product in products %}
         <Product>
+            <Language>tr</Language>
             <ProductCode>{{ product.code }}</ProductCode>
             <ProductName><![CDATA[{{ product.name }}]]></ProductName>
             <MainCategory><![CDATA[{{ product.vendor.category }}]]></MainCategory>
