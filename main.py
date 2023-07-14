@@ -135,7 +135,7 @@ class Translation(BaseModel):
 
 
 
-collection = db["translation_memory"]
+translation_memory_collection = db["translation_memory"]
 
 
 class TranslationItem(BaseModel):
@@ -161,14 +161,14 @@ class TranslationUpdateItem(BaseModel):
 async def update_translation(translation_id: str, translation_item: TranslationUpdateItem):
     translation_dict = translation_item.dict()
     translation_dict["last_update"] = datetime.utcnow()
-    translation_res = collection.update_one(
+    translation_res = translation_memory_collection.update_one(
         {"_id": ObjectId(translation_id)},
         {"$set": translation_dict}
     )
     if translation_res.modified_count == 0:
         raise HTTPException(status_code=404, detail="Translation not found")
 
-    updated_translation = collection.find_one({"_id": ObjectId(translation_id)})
+    updated_translation = translation_memory_collection.find_one({"_id": ObjectId(translation_id)})
     updated_translation["id"] = str(updated_translation["_id"])
     return updated_translation
 
@@ -188,7 +188,8 @@ async def get_translations(page: int = 0, per_page: int = 25,
                            target_lang: Optional[str] = None,
                            search: Optional[str] = Query(None)):
     skip = page * per_page
-    translation_query = {}
+    translation_query = {"products": {"$exists": True}}
+
     if search:
         translation_query['$or'] = [
             {'source_text': {'$regex': search, '$options': 'i'}},
@@ -204,13 +205,40 @@ async def get_translations(page: int = 0, per_page: int = 25,
         if target_lang:
             translation_query['target_lang'] = target_lang
 
-    translations = list(collection.find(translation_query).skip(skip).limit(per_page))
+    # Perform the aggregation to include object data of product IDs
+    pipeline = [
+        {"$match": translation_query},
+        {"$skip": skip},
+        {"$limit": per_page},
+        {"$lookup": {
+            "from": "products",
+            "localField": "products",
+            "foreignField": "_id",
+            "as": "product_data"
+        }},
+        {"$addFields": {
+            "products": "$product_data"
+        }},
+        {"$project": {
+            "_id": 1,
+            "source_text": 1,
+            "source_lang": 1,
+            "last_update": 1,
+            "target_text": 1,
+            "target_lang": 1,
+            "products": 1
+        }}
+    ]
+
+    translations = list(translation_memory_collection.aggregate(pipeline))
     for translation in translations:
         translation['id'] = str(translation['_id'])
+        print(translation)
 
-    total = collection.count_documents(translation_query)
+    total = translation_memory_collection.count_documents(translation_query)
     response = Pagination(total=total, items=translations, page=page, per_page=per_page)
     return response
+
 
 @app.get("/tm", response_class=HTMLResponse)
 async def read_item(request: Request):

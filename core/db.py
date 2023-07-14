@@ -151,7 +151,7 @@ def migrate_translation_memory_collection():
     trans_memory_validator = {
         '$jsonSchema': {
             'bsonType': 'object',
-            'required': ['source_text', 'source_lang', 'target_text', 'target_lang'],
+            'required': ['source_text', 'source_lang'],
         }
     }
     # apply schema
@@ -161,20 +161,74 @@ def migrate_translation_memory_collection():
 
 
 def migrate_all_collections():
-    # migrate vendor collection
+    # migrate vendor translation_memory_collection
     migrate_vendor_collection()
 
-    # migrate product collection
+    # migrate product translation_memory_collection
     migrate_product_collection()
 
-    # migrate product URLs collection
+    # migrate product URLs translation_memory_collection
     migrate_product_urls_collection()
 
-    # migrate translation memory collection
+    # migrate translation memory translation_memory_collection
     migrate_translation_memory_collection()
 
     print('=> Migrations completed!')
 
 
 if __name__ == '__main__':
-    migrate_all_collections()
+    # migrate_all_collections()
+    # Aggregate the translation_memory documents
+    pipeline = [
+        {"$match": {"products": {"$exists": True}}}
+        # {"$addFields": {
+        #     "first_product": {"$arrayElemAt": ["$products", 0]}
+        # }},
+        # {"$lookup": {
+        #     "from": "products",
+        #     "localField": "first_product",
+        #     "foreignField": "_id",
+        #     "as": "product_data"
+        # }},
+        # {"$unwind": "$product_data"},
+        # {"$project": {
+        #     "_id": 1,
+        #     "source_text": 1,
+        #     "source_lang": 1,
+        #     "last_update": 1,
+        #     "target_text": 1,
+        #     "target_lang": 1,
+        #     "product": "$product_data"
+        # }}
+    ]
+
+    # query = {"products": {"$exists": True}}
+    # projection = {"source_text": 1, "source_lang": 1, "last_update": 1, "target_text": 1, "target_lang": 1,
+    #               "products": 1}
+    #
+    #
+    # # Execute the aggregation pipeline
+    # result = db['translation_memory'].find(query, projection).limit(10)
+    # for tm_document in result:
+    #     # Flatten the product IDs to object data
+    #     product_ids = tm_document["products"]
+    #     object_ids = [ObjectId(product_id) for product_id in product_ids]
+    #     products = list(products_collection.find({"_id": {"$in": object_ids}}))
+    #
+    #     # Update the products field with object data
+    #     tm_document["products"] = products
+    #     print(tm_document)
+
+    # Query to find documents with string product IDs
+    query = {"products": {"$exists": True}, "products.0": {"$type": "string"}}
+
+    # Iterate over the documents and update the product IDs
+    for document in db['translation_memory'].find(query):
+        product_ids = document["products"]
+        object_ids = [ObjectId(product_id) for product_id in product_ids]
+
+        # Update the document with the new object IDs
+        db['translation_memory'].update_one(
+            {"_id": document["_id"]},
+            {"$set": {"products": object_ids}}
+        )

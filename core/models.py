@@ -71,9 +71,9 @@ class Vendor:
                                     '$$value',
                                     '<',
                                     {'$replaceAll': {'input': '$$this.key', 'find': ' ', 'replacement': '_'}},
-                                    '>',
+                                    '><![CDATA[',
                                     {'$toString': '$$this.value'},
-                                    '</',
+                                    ']]></',
                                     {'$replaceAll': {'input': '$$this.key', 'find': ' ', 'replacement': '_'}},
                                     '>',
                                 ]
@@ -230,18 +230,18 @@ class Vendor:
 
 
 if __name__ == '__main__':
-    vendor_name = 'vivense'
-    vendor = Vendor.find_by_name(vendor_name)
-    if not vendor:
-        vendor = Vendor(name=vendor_name)
-        vendor.save()
-
-    print(vendor.id)
+    # vendor_name = 'vivense'
+    # vendor = Vendor.find_by_name(vendor_name)
+    # if not vendor:
+    #     vendor = Vendor(name=vendor_name)
+    #     vendor.save()
+    #
+    # print(vendor.id)
 
     # for p in vendor.get_translated_products('ar'):
     #     print(p)
 
-    from bson.objectid import ObjectId
+    # from bson.objectid import ObjectId
 
     # products_collection.update_many(
     #     {"vendor_id": ObjectId('641251775981a1a080731f28')},
@@ -269,3 +269,34 @@ if __name__ == '__main__':
     # urls = [i['url'] for i in products]
     # vendor.bulk_update_product_urls_status(urls, 0)
     # vendor.delete_all_products()
+
+
+
+
+
+    translation_memory_collection = db['translation_memory']
+    # Retrieve all translation_memory documents
+    translation_memory_documents = translation_memory_collection.find()
+
+    # Iterate over each translation_memory document
+    for tm_document in translation_memory_documents:
+        source_text = tm_document["source_text"]
+
+        # Search for products that contain the source_text in their name or description
+        product_filter = {
+            "$or": [
+                {"name": {"$regex": source_text, "$options": "i"}},
+                {"description": {"$regex": source_text, "$options": "i"}}
+            ]
+        }
+        matching_products = products_collection.find(product_filter)
+
+        # Get the list of matching product IDs
+        matching_product_ids = [str(product["_id"]) for product in matching_products]
+
+        print('=>', source_text, matching_product_ids)
+        # Update the translation_memory document with the matching product IDs
+        translation_memory_collection.update_one(
+            {"_id": ObjectId(tm_document["_id"])},
+            {"$set": {"products": matching_product_ids}}
+        )

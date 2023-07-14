@@ -600,7 +600,7 @@
   var md5Attr = 'data-md5';
   var detectionIgnoreAttr = 'data-fa-detection-ignore';
   var timeoutAttr = 'data-fa-detection-timeout';
-  var resultsCollectionMaxWaitAttr = 'data-fa-detection-results-collection-max-wait';
+  var resultsCollectionMaxWaitAttr = 'data-fa-detection-results-translation_memory_collection-max-wait';
 
   var silenceErrors = function silenceErrors(e) {
     e.preventDefault();
